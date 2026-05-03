@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2c7da0">
+    <title>Firma Electrónica Ecuador</title>
+    
+    <!-- PWA Meta -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Firma EC">
+    
+    <!-- Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c7da0;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        
+        .step.active {
+            background: #e8f4f8;
+            border-left: 4px solid #2c7da0;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #2c7da0;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .step-description {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #2c7da0;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        
+        .file-label:hover {
+            background: #1a5a7a;
+        }
+        
+        .file-name {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2c7da0, #1a5a7a);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #2c7da0;
+            transition: width 0.3s;
+        }
+        
+        .info-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Modo oscuro automático (para PWA) */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1a1a2e, #16213e);
+            }
+            .card {
+                background: #1e1e2e;
+                color: #eee;
+            }
+            .step {
+                background: #2a2a3e;
+            }
+            .step-description, .info-text {
+                color: #aaa;
+            }
+            .info-text {
+                background: #2a2a3e;
+            }
+            input[type="password"] {
+                background: #2a2a3e;
+                color: #eee;
+                border-color: #444;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📄 FIRMA ELECTRÓNICA</h1>
+            <div class="subtitle">Ecuador - Certificados P12/PAdES</div>
+            
+            <!-- Paso 1: Certificado -->
+            <div class="step active" id="step1">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Certificado Digital</div>
+                    <div class="step-description">Selecciona tu archivo .p12 o .pfx</div>
+                    <input type="file" id="certInput" class="file-input" accept=".p12,.pfx">
+                    <label for="certInput" class="file-label">📁 Seleccionar certificado</label>
+                    <span id="certName" class="file-name"></span>
+                </div>
+            </div>
+            
+            <!-- Paso 2: Contraseña y verificación -->
+            <div class="step" id="step2">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Contraseña</div>
+                    <div class="step-description">Ingresa la contraseña del certificado</div>
+                    <input type="password" id="passwordInput" placeholder="Contraseña" disabled>
+                    <button id="verifyBtn" disabled>✓ Verificar certificado</button>
+                </div>
+            </div>
+            
+            <!-- Paso 3: PDF -->
+            <div class="step" id="step3">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Documento a Firmar</div>
+                    <div class="step-description">Selecciona el PDF que deseas firmar</div>
+                    <input type="file" id="pdfInput" class="file-input" accept=".pdf" disabled>
+                    <label for="pdfInput" class="file-label">📄 Seleccionar PDF</label>
+                    <span id="pdfName" class="file-name"></span>
+                </div>
+            </div>
+            
+            <!-- Botón de firma -->
+            <button id="signBtn" disabled>🔐 FIRMAR DOCUMENTO</button>
+            
+            <!-- Progreso -->
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <!-- Estado -->
+            <div id="status" class="status"></div>
+            
+            <!-- Información del certificado -->
+            <div id="certInfo" class="info-text" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // API URL - Cambiar según despliegue
+        const API_URL = 'http://localhost:8000';
+        
+        // Variables de estado
+        let sessionId = null;
+        let certificadoVerificado = false;
+        
+        // Elementos DOM
+        const certInput = document.getElementById('certInput');
+        const certName = document.getElementById('certName');
+        const pdfInput = document.getElementById('pdfInput');
+        const pdfName = document.getElementById('pdfName');
+        const passwordInput = document.getElementById('passwordInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        const signBtn = document.getElementById('signBtn');
+        const statusDiv = document.getElementById('status');
+        const certInfoDiv = document.getElementById('certInfo');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        
+        // Función para mostrar mensajes
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            setTimeout(() => {
+                if (type !== 'error') {
+                    // No ocultar automáticamente los errores
+                    setTimeout(() => {
+                        if (statusDiv.className === `status ${type}`) {
+                            statusDiv.style.display = 'none';
+                            statusDiv.className = 'status';
+                        }
+                    }, 5000);
+                }
+            }, 100);
+        }
+        
+        // Función para actualizar progreso
+        function setProgress(percent) {
+            progressBar.style.display = 'block';
+            progressFill.style.width = `${percent}%`;
+            if (percent >= 100) {
+                setTimeout(() => {
+                    progressBar.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 1000);
+            }
+        }
+        
+        // Paso 1: Subir certificado
+        certInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            certName.textContent = file.name;
+            
+            const formData = new FormData();
+            formData.append('cert', file);
+            
+            if (sessionId) {
+                formData.append('session_id', sessionId);
+            }
+            
+            showStatus('Subiendo certificado...', 'info');
+            setProgress(20);
+            
+            try {
+                const response = await fetch(`${API_URL}/upload-cert`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionId = data.session_id;
+                    showStatus('Certificado cargado correctamente', 'success');
+                    setProgress(40);
+                    
+                    // Habilitar paso 2
+                    passwordInput.disabled = false;
+                    verifyBtn.disabled = false;
+                    
+                    // Actualizar pasos visuales
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step2').classList.add('active');
+                } else {
+                    showStatus(`Error: ${data.detail || 'No se pudo cargar'}`, 'error');
+                    setProgress(0);
+                }
+            } catch (error) {
+                showStatus(`Error de conexión: ${error.message}`, 'error');
+                setProgress(0);
+            }
+        });
+        
+        // Paso 2: Verificar certificado
+        verifyBtn.addEventListener('click', async () => {
+            const password = passwordInput.value;
+            
+            if (!password) {
+                showStatus('Ingrese la contraseña del certificado', 'error');
+                return;
+            }
+            
+            if (!sessionId) {
+                showStatus('Primero cargue el certificado', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('password', password);
+            
+            showStatus('Verificando certificado...', 'info');
+            setProgress(60);
+            
+            try {
+                const response = await fetch(`${API_URL}/verify-cert`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    certificadoVerificado = true;
+                    showStatus(`✅ Certificado válido - Firmante: ${data.firmante}`, 'success');
+                    
+                    // Mostrar información
+                    certInfoDiv.style.display = 'block';
+                    certInfoDiv.innerHTML = `
+                        <strong>Información del certificado:</strong><br>
+                        Firmante: ${data.firmante}<br>
+                        Emisión: ${data.emision}<br>
+                        Expiración: ${data.expiracion}<br>
+                        Estado: ${data.vigente ? '✅ VIGENTE' : '❌ VENCIDO'}
+                        ${data.dias_restantes > 0 ? ` (${data.dias_restantes} días restantes)` : ''}
+                    `;
+                    
+                    setProgress(80);
+                    
+                    // Habilitar paso 3
+                    pdfInput.disabled = false;
+                    
+                    // Actualizar pasos visuales
+                    document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step3').classList.add('active');
+                } else {
+                    showStatus(`Error: ${data.detail || 'Contraseña incorrecta'}`, 'error');
+                    setProgress(40);
+                }
+            } catch (error) {
+                showStatus(`Error de conexión: ${error.message}`, 'error');
+                setProgress(40);
+            }
+        });
+        
+        // Paso 3: Subir PDF
+        pdfInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            pdfName.textContent = file.name;
+            
+            if (!sessionId) {
+                showStatus('Primero cargue el certificado', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('pdf', file);
+            formData.append('session_id', sessionId);
+            
+            showStatus('Subiendo PDF...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/upload-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showStatus('PDF cargado correctamente', 'success');
+                    
+                    // Habilitar botón de firma
+                    signBtn.disabled = false;
+                } else {
+                    showStatus(`Error: ${data.detail || 'No se pudo cargar el PDF'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Error de conexión: ${error.message}`, 'error');
+            }
+        });
+        
+        // Firmar documento
+        signBtn.addEventListener('click', async () => {
+            if (!sessionId) {
+                showStatus('Sesión no válida', 'error');
+                return;
+            }
+            
+            if (!certificadoVerificado) {
+                showStatus('Verifique el certificado primero', 'error');
+                return;
+            }
+            
+            const password = passwordInput.value;
+            
+            signBtn.disabled = true;
+            signBtn.textContent = '⏳ Firmando documento...';
+            
+            showStatus('Aplicando firma digital... Este proceso puede tomar unos segundos', 'info');
+            setProgress(85);
+            
+            try {
+                const response = await fetch(`${API_URL}/sign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        password: password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    setProgress(95);
+                    showStatus('✅ Documento firmado exitosamente. Descargando...', 'success');
+                    
+                    // Descargar el PDF firmado
+                    const downloadUrl = `${API_URL}/download/${sessionId}`;
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = data.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    setProgress(100);
+                    
+                    // Actualizar paso visual
+                    document.getElementById('step3').classList.remove('active');
+                    
+                    // Mostrar mensaje final
+                    setTimeout(() => {
+                        showStatus('🎉 Firma completada. Verifique el documento con FIRMAEC o Adobe Acrobat.', 'success');
+                    }, 1000);
+                } else {
+                    showStatus(`Error al firmar: ${data.detail || 'Error desconocido'}`, 'error');
+                    setProgress(0);
+                }
+            } catch (error) {
+                showStatus(`Error de conexión: ${error.message}`, 'error');
+                setProgress(0);
+            } finally {
+                signBtn.disabled = false;
+                signBtn.textContent = '🔐 FIRMAR DOCUMENTO';
+            }
+        });
+        
+        // Limpiar sesión al cerrar
+        window.addEventListener('beforeunload', async () => {
+            if (sessionId) {
+                try {
+                    await fetch(`${API_URL}/session/${sessionId}`, {
+                        method: 'DELETE'
+                    });
+                } catch (e) {
+                    console.error('Error limpiando sesión:', e);
+                }
+            }
+        });
+        
+        // Service Worker (para PWA)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registrado', reg))
+                .catch(err => console.error('Error Service Worker:', err));
+        }
+        
+        // Verificar conexión
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_URL}/`);
+                if (response.ok) {
+                    console.log('API conectada');
+                }
+            } catch (error) {
+                console.warn('API no disponible:', error);
+                showStatus('⚠️ No se pudo conectar al servidor. Asegúrese de que el backend esté corriendo en ' + API_URL, 'error');
+            }
+        }
+        
+        checkConnection();
+    </script>
+</body>
+</html>
