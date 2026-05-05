@@ -13,7 +13,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Firma EC">
     
-    <!-- Styles -->
     <style>
         * {
             margin: 0;
@@ -70,6 +69,11 @@
             border-left: 4px solid #2c7da0;
         }
         
+        .step.completed {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        
         .step-number {
             width: 40px;
             height: 40px;
@@ -81,6 +85,10 @@
             justify-content: center;
             font-weight: bold;
             margin-right: 15px;
+        }
+        
+        .step.completed .step-number {
+            background: #28a745;
         }
         
         .step-content {
@@ -117,6 +125,11 @@
             background: #1a5a7a;
         }
         
+        .file-label:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
         .file-name {
             display: inline-block;
             margin-left: 10px;
@@ -133,6 +146,10 @@
             margin-top: 10px;
         }
         
+        input[type="password"]:disabled {
+            background: #f0f0f0;
+        }
+        
         button {
             width: 100%;
             padding: 15px;
@@ -146,7 +163,7 @@
             transition: transform 0.2s, box-shadow 0.2s;
         }
         
-        button:hover {
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         }
@@ -220,7 +237,6 @@
             }
         }
         
-        /* Modo oscuro automático (para PWA) */
         @media (prefers-color-scheme: dark) {
             body {
                 background: linear-gradient(135deg, #1a1a2e, #16213e);
@@ -259,7 +275,7 @@
                     <div class="step-title">Certificado Digital</div>
                     <div class="step-description">Selecciona tu archivo .p12 o .pfx</div>
                     <input type="file" id="certInput" class="file-input" accept=".p12,.pfx">
-                    <label for="certInput" class="file-label">📁 Seleccionar certificado</label>
+                    <label for="certInput" class="file-label" id="certLabel">📁 Seleccionar certificado</label>
                     <span id="certName" class="file-name"></span>
                 </div>
             </div>
@@ -282,7 +298,7 @@
                     <div class="step-title">Documento a Firmar</div>
                     <div class="step-description">Selecciona el PDF que deseas firmar</div>
                     <input type="file" id="pdfInput" class="file-input" accept=".pdf" disabled>
-                    <label for="pdfInput" class="file-label">📄 Seleccionar PDF</label>
+                    <label for="pdfInput" class="file-label" id="pdfLabel" style="background:#6c757d;">📄 Seleccionar PDF</label>
                     <span id="pdfName" class="file-name"></span>
                 </div>
             </div>
@@ -305,7 +321,7 @@
     
     <script>
         // API URL - Cambiar según despliegue
-        const API_URL = 'http://localhost:8000';
+        const API_URL = 'https://psychic-invention-wrwp5wr9r6r9c66w-8000.app.github.dev/';
         
         // Variables de estado
         let sessionId = null;
@@ -314,8 +330,10 @@
         // Elementos DOM
         const certInput = document.getElementById('certInput');
         const certName = document.getElementById('certName');
+        const certLabel = document.getElementById('certLabel');
         const pdfInput = document.getElementById('pdfInput');
         const pdfName = document.getElementById('pdfName');
+        const pdfLabel = document.getElementById('pdfLabel');
         const passwordInput = document.getElementById('passwordInput');
         const verifyBtn = document.getElementById('verifyBtn');
         const signBtn = document.getElementById('signBtn');
@@ -328,17 +346,15 @@
         function showStatus(message, type = 'info') {
             statusDiv.textContent = message;
             statusDiv.className = `status ${type}`;
-            setTimeout(() => {
-                if (type !== 'error') {
-                    // No ocultar automáticamente los errores
-                    setTimeout(() => {
-                        if (statusDiv.className === `status ${type}`) {
-                            statusDiv.style.display = 'none';
-                            statusDiv.className = 'status';
-                        }
-                    }, 5000);
-                }
-            }, 100);
+            statusDiv.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    if (statusDiv.className === `status ${type}`) {
+                        statusDiv.style.display = 'none';
+                    }
+                }, 5000);
+            }
         }
         
         // Función para actualizar progreso
@@ -359,13 +375,11 @@
             if (!file) return;
             
             certName.textContent = file.name;
+            certLabel.style.background = "#28a745";
+            certLabel.textContent = "✅ Certificado cargado";
             
             const formData = new FormData();
             formData.append('cert', file);
-            
-            if (sessionId) {
-                formData.append('session_id', sessionId);
-            }
             
             showStatus('Subiendo certificado...', 'info');
             setProgress(20);
@@ -380,6 +394,7 @@
                 
                 if (response.ok) {
                     sessionId = data.session_id;
+                    console.log("Session ID:", sessionId);
                     showStatus('Certificado cargado correctamente', 'success');
                     setProgress(40);
                     
@@ -389,14 +404,27 @@
                     
                     // Actualizar pasos visuales
                     document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step1').classList.add('completed');
                     document.getElementById('step2').classList.add('active');
                 } else {
                     showStatus(`Error: ${data.detail || 'No se pudo cargar'}`, 'error');
                     setProgress(0);
+                    certLabel.style.background = "#dc3545";
+                    certLabel.textContent = "❌ Error al cargar";
+                    setTimeout(() => {
+                        certLabel.style.background = "#2c7da0";
+                        certLabel.textContent = "📁 Seleccionar certificado";
+                    }, 3000);
                 }
             } catch (error) {
                 showStatus(`Error de conexión: ${error.message}`, 'error');
                 setProgress(0);
+                certLabel.style.background = "#dc3545";
+                certLabel.textContent = "❌ Error de conexión";
+                setTimeout(() => {
+                    certLabel.style.background = "#2c7da0";
+                    certLabel.textContent = "📁 Seleccionar certificado";
+                }, 3000);
             }
         });
         
@@ -414,17 +442,19 @@
                 return;
             }
             
-            const formData = new FormData();
-            formData.append('session_id', sessionId);
-            formData.append('password', password);
-            
             showStatus('Verificando certificado...', 'info');
             setProgress(60);
             
             try {
                 const response = await fetch(`${API_URL}/verify-cert`, {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        session_id: sessionId,
+                        password: password
+                    })
                 });
                 
                 const data = await response.json();
@@ -448,9 +478,12 @@
                     
                     // Habilitar paso 3
                     pdfInput.disabled = false;
+                    pdfLabel.style.background = "#2c7da0";
+                    pdfLabel.style.cursor = "pointer";
                     
                     // Actualizar pasos visuales
                     document.getElementById('step2').classList.remove('active');
+                    document.getElementById('step2').classList.add('completed');
                     document.getElementById('step3').classList.add('active');
                 } else {
                     showStatus(`Error: ${data.detail || 'Contraseña incorrecta'}`, 'error');
@@ -468,6 +501,8 @@
             if (!file) return;
             
             pdfName.textContent = file.name;
+            pdfLabel.style.background = "#28a745";
+            pdfLabel.textContent = "✅ PDF cargado";
             
             if (!sessionId) {
                 showStatus('Primero cargue el certificado', 'error');
@@ -493,11 +528,27 @@
                     
                     // Habilitar botón de firma
                     signBtn.disabled = false;
+                    
+                    // Actualizar paso visual
+                    document.getElementById('step3').classList.remove('active');
+                    document.getElementById('step3').classList.add('completed');
                 } else {
                     showStatus(`Error: ${data.detail || 'No se pudo cargar el PDF'}`, 'error');
+                    pdfLabel.style.background = "#dc3545";
+                    pdfLabel.textContent = "❌ Error al cargar";
+                    setTimeout(() => {
+                        pdfLabel.style.background = "#2c7da0";
+                        pdfLabel.textContent = "📄 Seleccionar PDF";
+                    }, 3000);
                 }
             } catch (error) {
                 showStatus(`Error de conexión: ${error.message}`, 'error');
+                pdfLabel.style.background = "#dc3545";
+                pdfLabel.textContent = "❌ Error de conexión";
+                setTimeout(() => {
+                    pdfLabel.style.background = "#2c7da0";
+                    pdfLabel.textContent = "📄 Seleccionar PDF";
+                }, 3000);
             }
         });
         
@@ -541,17 +592,9 @@
                     
                     // Descargar el PDF firmado
                     const downloadUrl = `${API_URL}/download/${sessionId}`;
-                    const a = document.createElement('a');
-                    a.href = downloadUrl;
-                    a.download = data.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    window.open(downloadUrl, '_blank');
                     
                     setProgress(100);
-                    
-                    // Actualizar paso visual
-                    document.getElementById('step3').classList.remove('active');
                     
                     // Mostrar mensaje final
                     setTimeout(() => {
@@ -570,27 +613,7 @@
             }
         });
         
-        // Limpiar sesión al cerrar
-        window.addEventListener('beforeunload', async () => {
-            if (sessionId) {
-                try {
-                    await fetch(`${API_URL}/session/${sessionId}`, {
-                        method: 'DELETE'
-                    });
-                } catch (e) {
-                    console.error('Error limpiando sesión:', e);
-                }
-            }
-        });
-        
-        // Service Worker (para PWA)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('Service Worker registrado', reg))
-                .catch(err => console.error('Error Service Worker:', err));
-        }
-        
-        // Verificar conexión
+        // Verificar conexión con el servidor
         async function checkConnection() {
             try {
                 const response = await fetch(`${API_URL}/`);
